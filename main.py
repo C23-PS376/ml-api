@@ -37,6 +37,8 @@ import os
 import uvicorn
 import traceback
 import tensorflow as tf
+import json
+import numpy as np
 
 from pydantic import BaseModel
 from urllib.request import Request
@@ -50,7 +52,8 @@ from utils import load_image_into_numpy_array
 # If you use h5 type uncomment line below
 # model = tf.keras.models.load_model('./my_model.h5')
 # If you use saved model type uncomment line below
-# model = tf.saved_model.load("./my_model_folder")
+# model = tf.saved_model.load("./end-to-end_savedmodel")
+model = tf.keras.models.load_model("./end-to-end_keras")
 
 app = FastAPI()
 
@@ -75,49 +78,37 @@ def predict_text(req: RequestText, response: Response):
         # Step 2: Prepare your data to your model
         
         # Step 3: Predict the data
-        # result = model.predict(...)
+        result = model.predict([[text]])
         
         # Step 4: Change the result your determined API output
+        result = result.tolist()[0]
+        labels = ['toxic', 'severe toxic', 'obscene', 'threat', 'insult', 'identity hate']
+        thresholds = [0.68, 0.31, 0.46, 0.23, 0.27, 0.27]
+
+        # get the predictions on each label
+        response_dict = {label: value > threshold for label, value, threshold in zip(labels, result, thresholds)}
+        #  get all the true labels
+        true_labels = [label for label, is_true in response_dict.items() if is_true]
+        if true_labels:
+            response_text = f"Your thread contains {', '.join(true_labels)} content"
+        else:
+            response_text = "No toxicity detected"
+
+        # json dictionary as the message response
+        final_response = {'message': response_text}
+        json_response = json.dumps(response_dict)
         
-        return "Endpoint not implemented"
+        return json.loads(json_response)
     except Exception as e:
         traceback.print_exc()
         response.status_code = 500
         return "Internal Server Error"
 
-# If your model need image input use this endpoint!
-@app.post("/predict_image")
-def predict_image(uploaded_file: UploadFile, response: Response):
-    try:
-        # Checking if it's an image
-        if uploaded_file.content_type not in ["image/jpeg", "image/png"]:
-            response.status_code = 400
-            return "File is Not an Image"
-        
-        # In here you will get a numpy array in "image" variable.
-        # You can use this file, to load and do processing
-        # later down the line
-        image = load_image_into_numpy_array(uploaded_file.file.read())
-        print("Image shape:", image.shape)
-        
-        # Step 1: (Optional, but you should have one) Do your image preprocessing
-        
-        # Step 2: Prepare your data to your model
-        
-        # Step 3: Predict the data
-        # result = model.predict(...)
-        
-        # Step 4: Change the result your determined API output
-        
-        return "Endpoint not implemented"
-    except Exception as e:
-        traceback.print_exc()
-        response.status_code = 500
-        return "Internal Server Error"
+
 
 
 # Starting the server
 # Your can check the API documentation easily using /docs after the server is running
 port = os.environ.get("PORT", 8080)
-print(f"Listening to http://0.0.0.0:{port}")
-uvicorn.run(app, host='0.0.0.0',port=port)
+print(f"Listening to http://127.0.0.1:{port}")
+uvicorn.run(app, host='127.0.0.1',port=port)
