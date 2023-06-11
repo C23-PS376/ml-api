@@ -40,3 +40,7 @@ On request body, type in the JSON input
 ```sh
 {"text": "you sucker better run for yourself"}
 ```
+
+You will get the result of the prediction:
+
+![Alt text](2023-06-11.png)
