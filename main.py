@@ -52,7 +52,6 @@ from utils import load_image_into_numpy_array
 # If you use h5 type uncomment line below
 # model = tf.keras.models.load_model('./my_model.h5')
 # If you use saved model type uncomment line below
-# model = tf.saved_model.load("./end-to-end_savedmodel")
 model = tf.keras.models.load_model("./end-to-end")
 
 app = FastAPI()
