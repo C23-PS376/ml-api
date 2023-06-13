@@ -1,5 +1,7 @@
 # ML API Template 🚀 for SpeakSure Toxicity Detection
 
+This ML API is generated from a template made by Kaenova on https://github.com/kaenova/ml-api-template. All credit goes to them.
+
 ## How to use
 
 To get started, follow these steps:
